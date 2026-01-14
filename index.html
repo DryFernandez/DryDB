@@ -1,0 +1,245 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>DryDB - Database Manager</title>
+
+  </head>
+  <body>
+    <div id="app">
+      <!-- Vista de configuración de conexión -->
+      <div id="connection-view" class="view">
+        <div id="connection-panel">
+          <h1>🗄️ DryDB - Gestor de Base de Datos</h1>
+          
+          <div id="connection-form">
+            <h2>Configurar Conexión</h2>
+            
+            <div class="form-group">
+              <label for="db-type">Gestor de Base de Datos:</label>
+              <select id="db-type">
+                <option value="">Seleccione un gestor...</option>
+                <option value="mysql">MySQL</option>
+                <option value="postgresql">PostgreSQL</option>
+                <option value="sqlserver">SQL Server</option>
+                <option value="mariadb">MariaDB</option>
+                <option value="sqlite">SQLite</option>
+              </select>
+            </div>
+
+            <div id="connection-fields">
+              <div class="form-group">
+                <label for="host">Host:</label>
+                <input type="text" id="host" placeholder="localhost" value="localhost">
+              </div>
+
+              <div class="form-group">
+                <label for="port">Puerto:</label>
+                <input type="number" id="port" placeholder="3306">
+              </div>
+
+              <div class="form-group">
+                <label for="username">Usuario:</label>
+                <input type="text" id="username" placeholder="root">
+              </div>
+
+              <div class="form-group">
+                <label for="password">Contraseña:</label>
+                <input type="password" id="password" placeholder="••••••••">
+              </div>
+
+              <div class="form-group">
+                <label for="database">Base de Datos:</label>
+                <input type="text" id="database" placeholder="nombre_db">
+              </div>
+
+              <div class="form-group checkbox-group">
+                <label>
+                  <input type="checkbox" id="ssl">
+                  Usar SSL/TLS
+                </label>
+              </div>
+            </div>
+
+            <div class="button-group">
+              <button id="btn-connect" class="btn btn-primary">Conectar</button>
+              <button id="btn-save-connection" class="btn btn-success" disabled>Guardar Conexión</button>
+            </div>
+
+            <div id="connection-status" class="status-message"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vista principal con sidebar -->
+      <div id="main-view" class="view" style="display: none;">
+        <div class="main-container">
+          <!-- Sidebar -->
+          <aside id="sidebar">
+            <div class="sidebar-header">
+              <h2>Conexiones</h2>
+              <button id="btn-new-connection" class="btn btn-small">+ Nueva</button>
+            </div>
+            
+            <div id="connections-list" class="connections-list">
+              <!-- Aquí se mostrarán las conexiones guardadas -->
+            </div>
+
+            <div class="sidebar-section">
+              <h3>Historial de Consultas</h3>
+              <div id="queries-history" class="queries-history">
+                <!-- Aquí se mostrarán las consultas ejecutadas -->
+              </div>
+            </div>
+          </aside>
+
+          <!-- Área de trabajo principal -->
+          <main id="workspace">
+            <div class="workspace-header">
+              <h1 id="workspace-title">Seleccione una conexión</h1>
+              <button id="btn-new-query" class="btn btn-primary" style="display: none;">Nueva Consulta</button>
+            </div>
+            <div id="workspace-content" class="workspace-content">
+              <!-- Generador de consultas -->
+              <div id="query-builder" style="display: none;">
+                <div class="query-builder-container">
+                  <h2>Generador de Consultas</h2>
+                  
+                  <!-- Tipo de consulta -->
+                  <div class="form-group">
+                    <label for="query-type">Tipo de Consulta:</label>
+                    <select id="query-type" class="query-select">
+                      <option value="">Seleccione un tipo...</option>
+                      <option value="SELECT">SELECT - Consultar datos</option>
+                      <option value="INSERT">INSERT - Insertar datos</option>
+                      <option value="UPDATE">UPDATE - Actualizar datos</option>
+                      <option value="DELETE">DELETE - Eliminar datos</option>
+                    </select>
+                  </div>
+
+                  <!-- Selector de tablas -->
+                  <div id="tables-section" style="display: none;">
+                    <div class="form-group">
+                      <label>Tablas:</label>
+                      <div id="tables-selector" class="tables-grid"></div>
+                    </div>
+                  </div>
+
+                  <!-- JOIN Configuration (para múltiples tablas) -->
+                  <div id="join-section" style="display: none;">
+                    <h3>Configuración de Relaciones (JOINs)</h3>
+                    <div id="joins-container"></div>
+                  </div>
+
+                  <!-- Selector de campos (para SELECT) -->
+                  <div id="fields-section" style="display: none;">
+                    <div class="form-group">
+                      <label>Campos a seleccionar:</label>
+                      <div class="checkbox-group">
+                        <label>
+                          <input type="checkbox" id="select-all-fields">
+                          Seleccionar todos (*)
+                        </label>
+                      </div>
+                      <div id="fields-selector" class="fields-grid"></div>
+                    </div>
+                  </div>
+
+                  <!-- Funciones de agregación (para SELECT) -->
+                  <div id="aggregate-section" style="display: none;">
+                    <h3>Funciones de Agregación</h3>
+                    <div class="checkbox-group">
+                      <label>
+                        <input type="checkbox" id="use-aggregate">
+                        Usar funciones de agregación
+                      </label>
+                    </div>
+                    <div id="aggregate-container" style="display: none;">
+                      <div id="aggregate-functions"></div>
+                      <button id="btn-add-aggregate" class="btn btn-small btn-secondary">+ Agregar Función</button>
+                    </div>
+                  </div>
+
+                  <!-- GROUP BY (para SELECT con agregación) -->
+                  <div id="groupby-section" style="display: none;">
+                    <h3>Agrupar Por (GROUP BY)</h3>
+                    <div class="form-group">
+                      <label>Campos para agrupar:</label>
+                      <div id="groupby-selector" class="fields-grid"></div>
+                    </div>
+                  </div>
+
+                  <!-- HAVING (para filtros en agregación) -->
+                  <div id="having-section" style="display: none;">
+                    <h3>Condiciones HAVING (filtros de agregación)</h3>
+                    <div id="having-container"></div>
+                    <button id="btn-add-having" class="btn btn-small btn-secondary">+ Agregar Condición HAVING</button>
+                  </div>
+
+                  <!-- Valores para INSERT/UPDATE -->
+                  <div id="values-section" style="display: none;">
+                    <h3>Valores</h3>
+                    <div id="values-container"></div>
+                  </div>
+
+                  <!-- WHERE conditions -->
+                  <div id="where-section" style="display: none;">
+                    <h3>Condiciones WHERE</h3>
+                    <div id="conditions-container"></div>
+                    <button id="btn-add-condition" class="btn btn-small btn-secondary">+ Agregar Condición</button>
+                  </div>
+
+                  <!-- ORDER BY (para SELECT) -->
+                  <div id="order-section" style="display: none;">
+                    <h3>Ordenar Por (ORDER BY)</h3>
+                    <div class="form-group">
+                      <select id="order-field">
+                        <option value="">Sin ordenar</option>
+                      </select>
+                      <select id="order-direction">
+                        <option value="ASC">Ascendente</option>
+                        <option value="DESC">Descendente</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <!-- LIMIT (para SELECT) -->
+                  <div id="limit-section" style="display: none;">
+                    <div class="form-group">
+                      <label>
+                        <input type="checkbox" id="use-limit">
+                        Limitar resultados (LIMIT)
+                      </label>
+                      <input type="number" id="limit-value" placeholder="100" min="1" disabled>
+                    </div>
+                  </div>
+
+                  <!-- Query generada -->
+                  <div class="query-preview">
+                    <h3>Consulta SQL Generada:</h3>
+                    <textarea id="generated-query" readonly></textarea>
+                    <div class="button-group">
+                      <button id="btn-execute-generated" class="btn btn-primary">Ejecutar Consulta</button>
+                      <button id="btn-copy-query" class="btn btn-secondary">Copiar SQL</button>
+                      <button id="btn-clear-builder" class="btn btn-secondary">Limpiar</button>
+                    </div>
+                  </div>
+
+                  <!-- Resultados -->
+                  <div id="query-results-section" style="display: none;">
+                    <div class="results-header">
+                      <h3>Resultados:</h3>
+                      <button id="btn-export-excel" class="btn btn-success" style="display: none;">📥 Exportar a Excel</button>
+                    </div>
+                    <div id="query-results"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/renderer.ts"></script>
+  </body>
+</html>
